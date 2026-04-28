@@ -10,6 +10,4 @@ class Node {
     weak_ptr<Node<T>> prev;
     Node(const T& d):data(d),next(nullptr),prev(){}
 };
-
-
 #endif
