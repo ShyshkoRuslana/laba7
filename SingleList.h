@@ -4,7 +4,6 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
-#include "Node.h"
 
 template <typename T>
 class SingleList {
@@ -122,13 +121,18 @@ public:
         return -1;
     }
     //можливість веведення списку
-    void print() {
-        auto temp = head;
-        while (temp) {
-            std::cout << temp->data << " ";
-            temp = temp->next;
+    friend ostream& operator<<(ostream& os, const SingleList<T>& list) {
+        shared_ptr<Node<T>> cur = list.head;
+        os << "[";
+        bool first = true;
+        while (cur) {
+            if (!first) os << ", ";
+            os << cur->data;
+            first = false;
+            cur = cur->next;
         }
-        std::cout << std::endl;
+        os << "]";
+        return os;
     }
 };
 #endif
