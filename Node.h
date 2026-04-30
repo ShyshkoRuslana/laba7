@@ -5,9 +5,10 @@ using namespace std;
 
 template <typename T>
 class Node {
+public:
     T data;
-    shared_ptr<Node<T>> next;
-    weak_ptr<Node<T>> prev;
+    std::shared_ptr<Node<T>> next;
+    std::weak_ptr<Node<T>> prev;
     Node(const T& d):data(d),next(nullptr),prev(){}
 };
 #endif

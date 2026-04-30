@@ -4,125 +4,114 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
-
-template <typename T>
+template<typename T>
 class DoubleList {
 private:
-    std::shared_ptr<Node<T>> head;
-    std::shared_ptr<Node<T>> tail;
-    int size;
+    shared_ptr<Node<T>> head;
+    shared_ptr<Node<T>> tail;
+    size_t sz;
 public:
-    DoubleList() : head(nullptr), tail(nullptr), size(0) {}
-    void push_front(T value) {
-        auto newNode = std::make_shared<Node<T>>(value);
-        if (!head) {
-            head = tail = newNode;
-        } else {
-            newNode->next = head;
-            head->prev = newNode;
-            head = newNode;
-        }
-        size++;
+    DoubleList() : head(nullptr), tail(nullptr), sz(0) {}
+    ~DoubleList() = default;
+    void push_front(const T& val) {
+        shared_ptr<Node<T>>  node = make_shared<Node<T>>(val);
+        node->next = head;
+        if (head) head->prev = node;
+        head = node;
+        if (!tail) tail = head;
+        sz++;
     }
-    void push_back(T value) {
-        auto newNode = std::make_shared<Node<T>>(value);
+    void push_back(const T& val) {
+        shared_ptr<Node<T>>node = make_shared<Node<T>>(val);
         if (!tail) {
-            head = tail = newNode;
-        } else {
-            tail->next = newNode;
-            newNode->prev = tail;
-            tail = newNode;
+            head = tail = node;
         }
-        size++;
+        else {
+            tail->next = node;
+            node->prev = tail;
+            tail = node;
+        }
+        sz++;
     }
     void pop_front() {
-        if (!head)
-            throw std::out_of_range("List is empty");
+        if (!head) throw runtime_error("List is empty");
         head = head->next;
-        if (head)
-            head->prev.reset();
-        else
-            tail = nullptr;
-        size--;
+        if (head) head->prev.reset();
+        else tail = nullptr;
+        sz--;
     }
     void pop_back() {
-        if (!tail)
-            throw std::out_of_range("List is empty");
-        tail = tail->prev.lock();
-        if (tail)
-            tail->next = nullptr;
-        else
-            head = nullptr;
-        size--;
-    }
-    T& at(int index) {
-        if (index < 0 || index >= size)
-            throw std::out_of_range("Index out of range");
-        auto temp = head;
-        for (int i = 0; i < index; i++) {
-            temp = temp->next;
+        if (!tail) throw runtime_error("List is empty");
+        auto p = tail->prev.lock();
+        if (p) {
+            p->next = nullptr;
+            tail = p;
+        } else {
+            head = tail = nullptr;
         }
-        return temp->data;
+        sz--;
     }
-    void insert(int index, T value) {
-        if (index < 0 || index > size)
-            throw std::out_of_range("Index out of range");
+    size_t size() const {
+        return sz;
+    }
+    bool empty() const {
+        return sz == 0;
+    }
+    T& operator[](size_t index) {
+        if (index >= sz) throw out_of_range("Index out of range");
+        shared_ptr<Node<T>>  cur = head;
+        for (size_t i = 0; i < index; ++i) cur = cur->next;
+        return cur->data;
+    }
+    const T& operator[](size_t index) const {
+        if (index >= sz) throw out_of_range("Index out of range");
+        auto cur = head;
+        for (size_t i = 0; i < index; ++i) cur = cur->next;
+        return cur->data;
+    }
+    void insert_at(size_t index, const T& val) {
+        if (index > sz) throw out_of_range("Index out of range");
         if (index == 0) {
-            push_front(value);
+            push_front(val);
             return;
         }
-        if (index == size) {
-            push_back(value);
+        if (index == sz) {
+            push_back(val);
             return;
         }
-        auto newNode = std::make_shared<Node<T>>(value);
-        auto temp = head;
-        for (int i = 0; i < index - 1; i++) {
-            temp = temp->next;
-        }
-        newNode->next = temp->next;
-        newNode->prev = temp;
-        temp->next->prev = newNode;
-        temp->next = newNode;
-        size++;
+        auto cur = head;
+        for (size_t i = 0; i < index - 1; ++i) cur = cur->next;
+        auto node = make_shared<Node<T>>(val);
+        node->next = cur->next;
+        node->prev = cur;
+        cur->next->prev = node;
+        cur->next = node;
+        sz++;
     }
-    void remove(int index) {
-        if (index < 0 || index >= size)
-            throw std::out_of_range("Index out of range");
-
+    void remove_at(size_t index) {
+        if (index >= sz) throw out_of_range("Index out of range");
         if (index == 0) {
             pop_front();
             return;
         }
-        if (index == size - 1) {
+        if (index == sz - 1) {
             pop_back();
             return;
         }
-        auto temp = head;
-        for (int i = 0; i < index; i++) {
-            temp = temp->next;
-        }
-        auto prevNode = temp->prev.lock();
-        prevNode->next = temp->next;
-        temp->next->prev = prevNode;
-
-        size--;
+        auto cur = head;
+        for (size_t i = 0; i < index; ++i) cur = cur->next;
+        auto p = cur->prev.lock();
+        p->next = cur->next;
+        cur->next->prev = p;
+        sz--;
     }
-    int getSize() {
-        return size;
-    }
-    bool isEmpty() {
-        return size == 0;
-    }
-    int find(T value) {
-        auto temp = head;
-        int index = 0;
-
-        while (temp) {
-            if (temp->data == value)
-                return index;
-            temp = temp->next;
-            index++;
+    int find(const T& val) const {
+        auto cur = head;
+        size_t i = 0;
+        while (cur) {
+            if (cur->data == val) return (int)i;
+            cur = cur->next;
+            ++i;
         }
         return -1;
     }
